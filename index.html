@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spooky Pumpkin Catcher</title>
+    <!-- Tailwind CSS for modern layout and styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Creepster for spooky titles and Inter for UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for spooky icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #0b071e;
+            color: #f3f4f6;
+            overflow: hidden;
+        }
+        .spooky-font {
+            font-family: 'Creepster', cursive;
+            letter-spacing: 2px;
+        }
+        /* Custom glowing shadows */
+        .glow-orange {
+            text-shadow: 0 0 10px rgba(249, 115, 22, 0.8), 0 0 20px rgba(234, 88, 12, 0.5);
+        }
+        .glow-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(147, 51, 234, 0.5);
+        }
+        .box-glow {
+            box-shadow: 0 0 25px rgba(147, 51, 234, 0.4), inset 0 0 15px rgba(249, 115, 22, 0.2);
+        }
+        /* Moon glow animation */
+        @keyframes pulseMoon {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 30px rgba(254, 240, 138, 0.6)); }
+        }
+        .moon-anim {
+            animation: pulseMoon 4s ease-in-out infinite;
+        }
+        /* Floating ghosts animation */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+        }
+        .floating {
+            animation: floatSlow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col items-center justify-center relative">
+
+    <!-- Game Container / Canvas Wrapper -->
+    <div id="game-container" class="relative w-full h-full max-w-4xl max-h-[900px] overflow-hidden shadow-2xl bg-gradient-to-b from-[#0f0728] via-[#1a0b36] to-[#070313] border-4 border-purple-900/60 rounded-xl flex flex-col">
+
+        <!-- Background Graphics Layer (HTML/CSS Graveyard) -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <!-- Big Spooky Moon -->
+            <div class="absolute top-8 right-12 w-28 h-28 md:w-36 md:h-36 rounded-full bg-amber-100 moon-anim shadow-[0_0_50px_rgba(254,240,138,0.5)] flex items-center justify-center opacity-90">
+                <!-- Cute/Spooky Moon Face -->
+                <div class="relative w-full h-full opacity-30">
+                    <div class="absolute top-8 left-8 w-4 h-4 bg-purple-950 rounded-full"></div>
+                    <div class="absolute top-8 right-8 w-4 h-4 bg-purple-950 rounded-full"></div>
+                    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-10 h-5 border-b-4 border-purple-950 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Distant Mountains & Haunted Castle Silhouette -->
+            <div class="absolute bottom-24 left-0 right-0 h-48 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-purple-950/40 via-transparent to-transparent"></div>
+            
+            <!-- Graveyard Ground -->
+            <div class="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#05020a] via-[#0b0514] to-transparent border-t-2 border-purple-900/30"></div>
+        </div>
+
+        <!-- HUD Header (Score, Lives, Timer) -->
+        <div id="hud-bar" class="relative z-20 w-full px-6 py-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-purple-900/40 text-white">
+            <!-- Title / Brand -->
+            <div class="hidden sm:flex items-center space-x-2">
+                <i class="fa-solid fa-ghost text-orange-500 text-xl animate-bounce"></i>
+                <span class="spooky-font text-xl text-orange-400 tracking-wider">Pumpkin Catcher</span>
+            </div>
+
+            <!-- Score -->
+            <div class="flex items-center space-x-2 bg-purple-950/60 px-4 py-1.5 rounded-full border border-purple-700/50">
+                <i class="fa-solid fa-star text-yellow-400"></i>
+                <span class="text-xs uppercase tracking-wider text-purple-300 font-semibold">Score:</span>
+                <span id="score-display" class="font-bold text-lg text-yellow-300">0</span>
+            </div>
+
+            <!-- Lives -->
+            <div class="flex items-center space-x-2 bg-purple-950/60 px-4 py-1.5 rounded-full border border-purple-700/50">
+                <span class="text-xs uppercase tracking-wider text-purple-300 font-semibold">Lives:</span>
+                <div id="lives-display" class="flex space-x-1 text-orange-500 text-base">
+                    <i class="fa-solid fa-pumpkin"></i>
+                    <i class="fa-solid fa-pumpkin"></i>
+                    <i class="fa-solid fa-pumpkin"></i>
+                </div>
+            </div>
+
+            <!-- Timer -->
+            <div class="flex items-center space-x-2 bg-purple-950/60 px-4 py-1.5 rounded-full border border-purple-700/50">
+                <i class="fa-solid fa-stopwatch text-orange-400"></i>
+                <span class="text-xs uppercase tracking-wider text-purple-300 font-semibold">Time:</span>
+                <span id="timer-display" class="font-bold text-lg text-orange-400">60s</span>
+            </div>
+        </div>
+
+        <!-- Main Interactive Game Canvas Area -->
+        <div id="game-canvas-area" class="relative flex-1 z-10 w-full overflow-hidden cursor-none">
+            <!-- Game Loop Canvas -->
+            <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+            
+            <!-- Floating Tutorial Hint -->
+            <div id="tutorial-hint" class="absolute inset-x-0 bottom-8 flex justify-center pointer-events-none transition-opacity duration-500">
+                <div class="bg-purple-950/80 backdrop-blur-md px-6 py-2 rounded-full border border-purple-500/40 text-purple-200 text-sm shadow-lg flex items-center space-x-3">
+                    <i class="fa-solid fa-hand-pointer text-orange-400 animate-pulse"></i>
+                    <span>Move Mouse or Drag to Control the Witch Basket!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Screen Overlay -->
+        <div id="start-screen" class="absolute inset-0 z-30 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+            <div class="max-w-md w-full bg-[#120724] border-2 border-purple-600/60 rounded-2xl p-8 box-glow relative">
+                <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-purple-900 border-4 border-orange-500 flex items-center justify-center shadow-lg floating">
+                    <i class="fa-solid fa-hat-wizard text-4xl text-orange-400"></i>
+                </div>
+                
+                <h1 class="spooky-font text-5xl md:text-6xl text-orange-500 glow-orange mt-6 mb-2">Spooky Catcher</h1>
+                <p class="text-purple-300 text-sm mb-6">Catch glowing pumpkins and tasty candy for points! Dodge creepy skulls and ghosts, or lose a life!</p>
+                
+                <!-- Instructions grid -->
+                <div class="grid grid-cols-2 gap-3 mb-8 text-left text-xs bg-purple-950/50 p-4 rounded-xl border border-purple-800/40">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-orange-400 text-base">🎃</span>
+                        <span><strong>Pumpkins:</strong> +10 pts</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-yellow-400 text-base">🍬</span>
+                        <span><strong>Candy:</strong> +5 pts</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-red-400 text-base">💀</span>
+                        <span><strong>Skulls:</strong> -1 Life</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-cyan-400 text-base">👻</span>
+                        <span><strong>Ghosts:</strong> -1 Life</span>
+                    </div>
+                </div>
+
+                <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white spooky-font text-2xl rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.6)] transform hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer">
+                    Start Haunting!
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen Overlay -->
+        <div id="game-over-screen" class="absolute inset-0 z-30 bg-black/85 backdrop-blur-md hidden flex flex-col items-center justify-center p-6 text-center">
+            <div class="max-w-md w-full bg-[#120724] border-2 border-red-600/60 rounded-2xl p-8 box-glow relative">
+                <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-purple-900 border-4 border-red-500 flex items-center justify-center shadow-lg floating">
+                    <i class="fa-solid fa-skull text-4xl text-red-400"></i>
+                </div>
+
+                <h2 id="game-over-title" class="spooky-font text-5xl text-red-500 glow-orange mt-6 mb-2">Game Over</h2>
+                <p id="game-over-subtitle" class="text-purple-300 text-sm mb-6">The graveyard claims another soul...</p>
+
+                <!-- Final Stats Box -->
+                <div class="bg-purple-950/60 border border-purple-800/50 rounded-xl p-5 mb-8 space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-purple-300">Final Score:</span>
+                        <span id="final-score" class="font-extrabold text-2xl text-yellow-400">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm border-t border-purple-900/60 pt-2">
+                        <span class="text-purple-300">High Score:</span>
+                        <span id="final-highscore" class="font-extrabold text-xl text-orange-400">0</span>
+                    </div>
+                </div>
+
+                <button id="restart-btn" class="w-full py-4 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white spooky-font text-2xl rounded-xl shadow-[0_0_20px_rgba(147,51,234,0.6)] transform hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer">
+                    Play Again
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Floating Toast Message Box (Alternative to alert) -->
+    <div id="toast-box" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300 bg-orange-600 text-white font-bold px-6 py-2 rounded-full shadow-2xl border-2 border-white/20 text-sm">
+        Notification
+    </div>
+
+    <!-- Game Engine Script -->
+    <script>
+        // --- SOUND & FEEDBACK UTILS (Web Audio API Synthesizer - No External Assets) ---
+        class SoundFX {
+            static playCatch() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                } catch(e) {}
+            }
+
+            static playHit() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                } catch(e) {}
+            }
+
+            static playStart() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const notes = [261.63, 329.63, 392.00, 523.25];
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+                        gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.15);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + i * 0.08);
+                        osc.stop(ctx.currentTime + i * 0.08 + 0.15);
+                    });
+                } catch(e) {}
+            }
+        }
+
+        // --- GAME STATE MANAGEMENT ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameState = 'START'; // START, PLAYING, GAMEOVER
+        let score = 0;
+        let lives = 3;
+        let timeLeft = 60;
+        let highscore = localStorage.getItem('spooky_pumpkin_highscore') || 0;
+
+        let gameTimerInterval = null;
+        let spawnerInterval = null;
+        let animationFrameId = null;
+
+        // Player / Catcher Object (Witch Basket)
+        let player = {
+            x: 0,
+            y: 0,
+            width: 90,
+            height: 70,
+            targetX: 0,
+            speed: 0.2 // Smoothing factor for movement
+        };
+
+        // Entities arrays
+        let fallingItems = [];
+        let particles = [];
+
+        // Item types configuration
+        const ITEM_TYPES = [
+            { type: 'pumpkin', symbol: '🎃', points: 10, weight: 45, radius: 24, color: '#f97316' },
+            { type: 'candy', symbol: '🍬', points: 5, weight: 30, radius: 18, color: '#ec4899' },
+            { type: 'skull', symbol: '💀', points: 0, lifeCost: 1, weight: 15, radius: 20, color: '#ef4444' },
+            { type: 'ghost', symbol: '👻', points: 0, lifeCost: 1, weight: 10, radius: 22, color: '#38bdf8' }
+        ];
+
+        // Resize Canvas to fit container cleanly
+        function resizeCanvas() {
+            const container = document.getElementById('game-canvas-area');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            if (gameState === 'START') {
+                player.x = canvas.width / 2 - player.width / 2;
+                player.targetX = player.x;
+            }
+            player.y = canvas.height - player.height - 25;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- INPUT HANDLING (Mouse & Touch) ---
+        function handlePointerMove(clientX) {
+            const rect = canvas.getBoundingClientRect();
+            const rootX = clientX - rect.left;
+            player.targetX = rootX - player.width / 2;
+            // Clamp within bounds
+            if (player.targetX < 10) player.targetX = 10;
+            if (player.targetX > canvas.width - player.width - 10) {
+                player.targetX = canvas.width - player.width - 10;
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (gameState === 'PLAYING') handlePointerMove(e.clientX);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (gameState === 'PLAYING' && e.touches.length > 0) {
+                handlePointerMove(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameState === 'PLAYING' && e.touches.length > 0) {
+                handlePointerMove(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        // --- GAME LOGIC & LOOP ---
+        function startGame() {
+            gameState = 'PLAYING';
+            score = 0;
+            lives = 3;
+            timeLeft = 60;
+            fallingItems = [];
+            particles = [];
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('tutorial-hint').style.opacity = '1';
+
+            // Hide tutorial hint after 4 seconds
+            setTimeout(() => {
+                const hint = document.getElementById('tutorial-hint');
+                if (hint) hint.style.opacity = '0';
+            }, 4000);
+
+            SoundFX.playStart();
+            updateHUD();
+
+            // Clear previous loops if any
+            clearInterval(gameTimerInterval);
+            clearInterval(spawnerInterval);
+            cancelAnimationFrame(animationFrameId);
+
+            // Start timer
+            gameTimerInterval = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    timeLeft--;
+                    updateHUD();
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+
+            // Start spawner
+            spawnerInterval = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    spawnItem();
+                }
+            }, 650);
+
+            // Start render loop
+            lastTime = performance.now();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function spawnItem() {
+            // Weighted random selection
+            const totalWeight = ITEM_TYPES.reduce((sum, item) => sum + item.weight, 0);
+            let randomNum = Math.random() * totalWeight;
+            let selectedConfig = ITEM_TYPES[0];
+
+            for (let item of ITEM_TYPES) {
+                if (randomNum < item.weight) {
+                    selectedConfig = item;
+                    break;
+                }
+                randomNum -= item.weight;
+            }
+
+            const x = Math.random() * (canvas.width - 60) + 30;
+            const speedMultiplier = 1 + (60 - timeLeft) / 45; // Speed increases as time runs out
+            const speed = (Math.random() * 1.5 + 2.2) * speedMultiplier;
+
+            fallingItems.push({
+                x: x,
+                y: -40,
+                speed: speed,
+                rotation: Math.random() * Math.PI,
+                rotSpeed: (Math.random() - 0.5) * 0.05,
+                config: selectedConfig
+            });
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6 - 2,
+                    alpha: 1,
+                    color: color,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            if (gameState !== 'PLAYING') return;
+
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Smooth player movement interpolation (lerp)
+            player.x += (player.targetX - player.x) * 0.3;
+
+            // 1. Draw and update falling items
+            for (let i = fallingItems.length - 1; i >= 0; i--) {
+                let item = fallingItems[i];
+                item.y += item.speed;
+                item.rotation += item.rotSpeed;
+
+                ctx.save();
+                ctx.translate(item.x, item.y);
+                ctx.rotate(item.rotation);
+                ctx.font = '28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.config.symbol, 0, 0);
+                ctx.restore();
+
+                // Collision detection with player basket
+                // Player box: x, y, width, height
+                const hitBoxPadding = 10;
+                if (
+                    item.x >= player.x - hitBoxPadding &&
+                    item.x <= player.x + player.width + hitBoxPadding &&
+                    item.y >= player.y - 10 &&
+                    item.y <= player.y + player.height / 2
+                ) {
+                    // Collected!
+                    if (item.config.type === 'pumpkin' || item.config.type === 'candy') {
+                        score += item.config.points;
+                        SoundFX.playCatch();
+                        createParticles(item.x, item.y, item.config.color);
+                    } else {
+                        // Hazard hit
+                        lives -= item.config.lifeCost;
+                        SoundFX.playHit();
+                        createParticles(item.x, item.y, '#ef4444');
+                        if (lives <= 0) {
+                            lives = 0;
+                            updateHUD();
+                            endGame();
+                            return;
+                        }
+                    }
+                    updateHUD();
+                    fallingItems.splice(i, 1);
+                    continue;
+                }
+
+                // Remove if out of bounds (bottom)
+                if (item.y > canvas.height + 50) {
+                    fallingItems.splice(i, 1);
+                }
+            }
+
+            // 2. Draw and update particle effects
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.03;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 3. Draw Player Catcher (Witch Basket / Cauldron)
+            drawWitchBasket(player.x, player.y, player.width, player.height);
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function drawWitchBasket(x, y, w, h) {
+            ctx.save();
+            
+            // Basket Cauldron Body
+            ctx.fillStyle = '#1e1b4b';
+            ctx.strokeStyle = '#9333ea';
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.roundRect(x, y + 20, w, h - 20, [0, 0, 20, 20]);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cauldron Rim
+            ctx.fillStyle = '#312e81';
+            ctx.beginPath();
+            ctx.roundRect(x - 6, y + 10, w + 12, 12, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glowing Magical Brew inside Cauldron
+            const gradient = ctx.createRadialGradient(x + w/2, y + 25, 5, x + w/2, y + 25, w/2);
+            gradient.addColorStop(0, '#f97316');
+            gradient.addColorStop(1, '#9a3412');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.ellipse(x + w/2, y + 16, w/2 - 4, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cute Witch Hat sitting on top or floating above
+            ctx.font = '32px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🧙‍♀️', x + w/2, y - 10);
+
+            ctx.restore();
+        }
+
+        function updateHUD() {
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('timer-display').innerText = timeLeft + 's';
+            
+            const livesContainer = document.getElementById('lives-display');
+            let heartsHtml = '';
+            for (let i = 0; i < lives; i++) {
+                heartsHtml += '<i class="fa-solid fa-pumpkin text-orange-500"></i> ';
+            }
+            for (let i = lives; i < 3; i++) {
+                heartsHtml += '<i class="fa-solid fa-pumpkin text-gray-700 opacity-40"></i> ';
+            }
+            livesContainer.innerHTML = heartsHtml;
+        }
+
+        function endGame() {
+            gameState = 'GAMEOVER';
+            clearInterval(gameTimerInterval);
+            clearInterval(spawnerInterval);
+            cancelAnimationFrame(animationFrameId);
+
+            // Update High Score
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('spooky_pumpkin_highscore', highscore);
+            }
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-highscore').innerText = highscore;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+
+        // Event Listeners for UI Buttons
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+
+    </script>
+</body>
+</html>
